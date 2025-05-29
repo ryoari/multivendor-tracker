@@ -1,0 +1,63 @@
+"use client";
+import { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Leaflet icon fix for Next.js/Webpack
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
+// This is a common workaround for Leaflet's default icon path issues with bundlers.
+// @ts-ignore
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: iconRetinaUrl.src,
+    iconUrl: iconUrl.src,
+    shadowUrl: shadowUrl.src,
+});
+// End of icon fix
+
+// Map controller component to handle map reference and updates
+function MapController({ position }: { position: { lat: number; lng: number } | null }) {
+    const map = useMap();
+    
+    useEffect(() => {
+        if (position) {
+            map.flyTo([position.lat, position.lng], map.getZoom() || 13);
+        }
+    }, [map, position]);
+    
+    return null;
+}
+
+interface MapComponentProps {
+    position: { lat: number; lng: number } | null;
+    defaultCenter?: [number, number];
+}
+
+export default function MapComponent({ 
+    position, 
+    defaultCenter = [20.5937, 78.9629] // Default to center of India
+}: MapComponentProps) {
+    return (
+        <MapContainer
+            center={position ? [position.lat, position.lng] : defaultCenter}
+            zoom={position ? 15 : 6} // Zoom in if position is known
+            scrollWheelZoom={true}
+            style={{ height: "100%", width: "100%" }}
+        >
+            <MapController position={position} />
+            <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {position && (
+                <Marker position={[position.lat, position.lng]}>
+                    <Popup>Delivery Partner is here!</Popup>
+                </Marker>
+            )}
+        </MapContainer>
+    );
+}
